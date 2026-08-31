@@ -3,6 +3,28 @@ import { AuthenticatedRequest } from '../middlewares/authGuard';
 import { AppError } from '../AppError';
 import { prisma } from '../prisma';
 
+export const getProviderGear = async (
+  req: AuthenticatedRequest,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    const providerId = req.user!.id;
+
+    const gearList = await prisma.gearItem.findMany({
+      where: { providerId },
+      orderBy: { createdAt: 'desc' },
+    });
+
+    res.status(200).json({
+      success: true,
+      gear: gearList,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
 export const addGear = async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
   try {
     const { title, description, brand, pricePerDay, stock, categoryId } = req.body;
