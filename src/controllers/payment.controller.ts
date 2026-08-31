@@ -18,9 +18,7 @@ export const createPaymentIntent = async (req: AuthenticatedRequest, res: Respon
       amount: Math.round(order.totalPrice * 100), // Stripe currency cents unit format rules
       currency: 'usd',
       metadata: { rentalOrderId },
-      payment_method: 'pm_card_visa',
-      confirm: true,
-      return_url: 'https://example.com',
+      automatic_payment_methods: { enabled: true },
     });
 
     res.status(200).json({ success: true, data: { clientSecret: intent.client_secret, transactionId: intent.id } });
