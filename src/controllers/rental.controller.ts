@@ -16,14 +16,15 @@ export const createRentalOrder = async (
   next: NextFunction
 ) => {
   try {
-    const { gearItemId, startDate, endDate, totalPrice } = req.body;
+    const { gearItemId, startDate, endDate, totalPrice, quantity } = req.body;
+    const requestedQuantity = Number(quantity) || 1;
 
     const gear = await prisma.gearItem.findUnique({
       where: { id: gearItemId },
     });
 
-    if (!gear || !gear.isAvailable || gear.stock <= 0) {
-      return next(new AppError(400, 'Requested gear is currently out of stock or unavailable'));
+    if (!gear || !gear.isAvailable || gear.stock < requestedQuantity) {
+      return next(new AppError(400, 'Requested quantity exceeds available stock or gear is unavailable'));
     }
 
     const start = new Date(startDate);
@@ -32,13 +33,13 @@ export const createRentalOrder = async (
     const order = await prisma.$transaction(async (tx) => {
       const updatedGear = await tx.gearItem.update({
         where: { id: gearItemId },
-        data: { stock: { decrement: 1 } },
+        data: { stock: { decrement: requestedQuantity } },
       });
 
-      if (updatedGear.stock === 0) {
+      if (updatedGear.stock <= 0) {
         await tx.gearItem.update({
           where: { id: gearItemId },
-          data: { isAvailable: false },
+          data: { isAvailable: false, stock: 0 },
         });
       }
 
@@ -47,6 +48,7 @@ export const createRentalOrder = async (
           startDate: start,
           endDate: end,
           totalPrice,
+          quantity: requestedQuantity,
           customerId: req.user!.id,
           gearItemId,
         },
@@ -159,9 +161,10 @@ export const updateOrderStatus = async (
       });
 
       if (status === 'RETURNED') {
+        const returnQty = (order as any).quantity || 1;
         await tx.gearItem.update({
           where: { id: order.gearItemId },
-          data: { stock: { increment: 1 }, isAvailable: true },
+          data: { stock: { increment: returnQty }, isAvailable: true },
         });
       }
 
