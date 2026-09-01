@@ -28,18 +28,21 @@ export const getProviderGear = async (
 
 export const addGear = async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
   try {
-    const { title, description, brand, pricePerDay, stock, categoryId } = req.body;
+    const { title, description, brand, pricePerDay, stock, categoryId, imageUrl, images } = req.body;
     const providerId = req.user!.id;
+
+    const imageArray = images || (imageUrl ? [imageUrl] : []);
 
     const newGear = await prisma.gearItem.create({
       data: {
         title,
         description,
         brand,
-        pricePerDay,
-        stock,
+        pricePerDay: Number(pricePerDay),
+        stock: Number(stock),
         categoryId,
         providerId,
+        images: imageArray,
       },
     });
 
