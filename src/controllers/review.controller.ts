@@ -20,6 +20,18 @@ export const createReview = async (req: AuthenticatedRequest, res: Response, nex
       return next(new AppError(400, 'You can only review gear items from a completed and returned rental order.'));
     }
 
+    // Check if a review already exists for this specific order/gear item by this user
+    const existingReview = await prisma.review.findFirst({
+      where: {
+        customerId: req.user!.id,
+        gearItemId: verifiedOrder.gearItemId,
+      }
+    });
+
+    if (existingReview) {
+      return next(new AppError(400, 'You have already submitted a review for this rental item.'));
+    }
+
     const review = await prisma.review.create({
       data: { 
         rating, 
