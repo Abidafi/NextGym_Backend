@@ -46,3 +46,39 @@ export const createReview = async (req: AuthenticatedRequest, res: Response, nex
     next(error); 
   }
 };
+
+export const getReviewByOrder = async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
+  try {
+    const orderId = String(req.params.orderId);
+
+    const verifiedOrder = await prisma.rentalOrder.findFirst({
+      where: {
+        id: orderId,
+        customerId: req.user!.id,
+      },
+      include: { gearItem: true }
+    });
+
+    if (!verifiedOrder) {
+      return next(new AppError(404, 'Rental order not found.'));
+    }
+
+    const review = await prisma.review.findFirst({
+      where: {
+        customerId: req.user!.id,
+        gearItemId: verifiedOrder.gearItemId,
+      },
+      include: {
+        gearItem: true,
+      }
+    });
+
+    if (!review) {
+      return next(new AppError(404, 'No review found for this order.'));
+    }
+
+    res.status(200).json({ success: true, data: review });
+  } catch (error) {
+    next(error);
+  }
+};
