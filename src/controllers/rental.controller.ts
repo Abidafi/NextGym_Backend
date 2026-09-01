@@ -150,8 +150,25 @@ export const updateOrderStatus = async (
       include: { gearItem: true },
     });
 
-    if (!order || order.gearItem.providerId !== req.user!.id) {
+    if (!order) {
+      return next(new AppError(404, 'Rental order not found'));
+    }
+
+    const userId = req.user!.id;
+    const userRole = req.user!.role;
+
+    // Check authorization: Allow if user is an ADMIN, the owner customer, or the item provider
+    const isOwnerCustomer = order.customerId === userId;
+    const isItemProvider = order.gearItem?.providerId === userId;
+    const isAdmin = userRole === 'ADMIN';
+
+    if (!isOwnerCustomer && !isItemProvider && !isAdmin) {
       return next(new AppError(403, 'Unauthorized scope update access'));
+    }
+
+    // If a customer is updating, restrict them to only changing status to 'RETURNED'
+    if (userRole === 'CUSTOMER' && status !== 'RETURNED') {
+      return next(new AppError(403, 'Customers are only allowed to mark orders as returned'));
     }
 
     const updatedOrder = await prisma.$transaction(async (tx) => {

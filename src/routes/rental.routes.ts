@@ -17,5 +17,6 @@ router.get('/', authGuard('CUSTOMER'), getMyOrders);
 router.get('/provider', authGuard('PROVIDER'), getProviderOrders);
 router.patch('/provider/:id', authGuard('PROVIDER'), updateOrderStatus);
 router.get('/:id', authGuard('CUSTOMER', 'PROVIDER', 'ADMIN'), getRentalDetails);
+router.patch('/:id', authGuard('CUSTOMER', 'ADMIN', 'PROVIDER'), updateOrderStatus);
 
 export default router;
