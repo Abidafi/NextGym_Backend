@@ -31,7 +31,14 @@ export const addGear = async (req: AuthenticatedRequest, res: Response, next: Ne
     const { title, description, brand, pricePerDay, stock, categoryId, imageUrl, images } = req.body;
     const providerId = req.user!.id;
 
-    const imageArray = images || (imageUrl ? [imageUrl] : []);
+    let finalImages: string[] = [];
+    if (Array.isArray(images) && images.length > 0) {
+      finalImages = images;
+    } else if (imageUrl) {
+      finalImages = [imageUrl];
+    } else if (Array.isArray(req.body.images)) {
+      finalImages = req.body.images;
+    }
 
     const newGear = await prisma.gearItem.create({
       data: {
@@ -42,7 +49,7 @@ export const addGear = async (req: AuthenticatedRequest, res: Response, next: Ne
         stock: Number(stock),
         categoryId,
         providerId,
-        images: imageArray,
+        images: finalImages,
       },
     });
 
