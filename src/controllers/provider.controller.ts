@@ -13,6 +13,7 @@ export const getProviderGear = async (
 
     const gearList = await prisma.gearItem.findMany({
       where: { providerId },
+      include: { category: true },
       orderBy: { createdAt: 'desc' },
     });
 
