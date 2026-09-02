@@ -21,7 +21,12 @@ export const toggleUserSuspension = async (req: Request, res: Response, next: Ne
 
 export const adminGetALlGear = async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const gear = await prisma.gearItem.findMany({ include: { provider: { select: { name: true, email: true } } } });
+    const gear = await prisma.gearItem.findMany({ 
+      include: { 
+        provider: { select: { name: true, email: true } },
+        category: true 
+      } 
+    });
     res.status(200).json({ success: true, data: gear });
   } catch (error) { next(error); }
 };
