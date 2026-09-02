@@ -70,6 +70,7 @@ export const getReviewByOrder = async (req: AuthenticatedRequest, res: Response,
       },
       include: {
         gearItem: true,
+        customer: true,
       }
     });
 
