@@ -46,7 +46,16 @@ export const confirmPayment = async (req: AuthenticatedRequest, res: Response, n
 
 export const getPaymentHistory = async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
   try {
-    const history = await prisma.payment.findMany({ where: { rentalOrder: { customerId: req.user!.id } }, include: { rentalOrder: true } });
+    const history = await prisma.payment.findMany({ 
+      where: { rentalOrder: { customerId: req.user!.id } }, 
+      include: { 
+        rentalOrder: {
+          include: {
+            gearItem: true, 
+          }
+        } 
+      } 
+    });
     res.status(200).json({ success: true, data: history });
   } catch (error) { next(error); }
 };

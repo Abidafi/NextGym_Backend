@@ -5,7 +5,7 @@ import { authGuard } from '../middlewares/authGuard';
 const router = Router();
 router.post('/create', authGuard('CUSTOMER'), createPaymentIntent);
 router.post('/confirm', authGuard('CUSTOMER'), confirmPayment);
-router.get('/', authGuard('CUSTOMER'), getPaymentHistory);
+router.get('/history', authGuard('CUSTOMER'), getPaymentHistory); 
 router.get('/:id', authGuard('CUSTOMER'), getPaymentDetails);
 
 export default router;
