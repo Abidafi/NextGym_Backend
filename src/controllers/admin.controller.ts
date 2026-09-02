@@ -36,7 +36,7 @@ export const adminGetAllRentals = async (req: Request, res: Response, next: Next
     const rentals = await prisma.rentalOrder.findMany({
       include: {
         customer: { select: { name: true, email: true } },
-        gearItem: { select: { title: true, name: true, pricePerDay: true } }
+        gearItem: { select: { title: true, pricePerDay: true } }
       }
     });
     res.status(200).json({ success: true, data: rentals });
