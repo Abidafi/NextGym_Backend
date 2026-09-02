@@ -15,7 +15,7 @@ router.post(
 
 router.get(
   '/order/:orderId',
-  authGuard('CUSTOMER'),
+  authGuard('CUSTOMER', 'PROVIDER'),
   getReviewByOrder
 );
 

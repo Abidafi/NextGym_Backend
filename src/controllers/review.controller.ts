@@ -50,22 +50,28 @@ export const createReview = async (req: AuthenticatedRequest, res: Response, nex
 export const getReviewByOrder = async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
   try {
     const orderId = String(req.params.orderId);
+    const userId = req.user!.id;
+    const userRole = req.user!.role; // Assuming user role is stored in req.user
+
+    // Build the condition based on whether user is a Customer or Provider
+    const orderCondition: any = { id: orderId };
+    if (userRole === 'PROVIDER') {
+      orderCondition.gearItem = { providerId: userId };
+    } else {
+      orderCondition.customerId = userId;
+    }
 
     const verifiedOrder = await prisma.rentalOrder.findFirst({
-      where: {
-        id: orderId,
-        customerId: req.user!.id,
-      },
+      where: orderCondition,
       include: { gearItem: true }
     });
 
     if (!verifiedOrder) {
-      return next(new AppError(404, 'Rental order not found.'));
+      return next(new AppError(404, 'Rental order not found or unauthorized access.'));
     }
 
     const review = await prisma.review.findFirst({
       where: {
-        customerId: req.user!.id,
         gearItemId: verifiedOrder.gearItemId,
       },
       include: {
