@@ -33,10 +33,24 @@ export const confirmPayment = async (req: AuthenticatedRequest, res: Response, n
     if (paymentIntent.status !== 'succeeded') return next(new AppError(400, 'Stripe Gateway has not processed this transaction successfully'));
 
     const result = await prisma.$transaction(async (tx) => {
-      const updatedOrder = await tx.rentalOrder.update({ where: { id: rentalOrderId }, data: { status: 'PAID' } });
-      const paymentRecord = await tx.payment.create({
-        data: { transactionId, amount: paymentIntent.amount / 100, status: 'COMPLETED', rentalOrderId, paidAt: new Date() },
+      const updatedOrder = await tx.rentalOrder.update({ 
+        where: { id: rentalOrderId }, 
+        data: { status: 'PAID' } 
       });
+      
+      // Use upsert to make this endpoint idempotent and handle duplicate requests gracefully
+      const paymentRecord = await tx.payment.upsert({
+        where: { transactionId },
+        update: {}, // Do nothing if the payment record already exists
+        create: { 
+          transactionId, 
+          amount: paymentIntent.amount / 100, 
+          status: 'COMPLETED', 
+          rentalOrderId, 
+          paidAt: new Date() 
+        },
+      });
+
       return { updatedOrder, paymentRecord };
     });
 
