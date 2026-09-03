@@ -90,9 +90,18 @@ export const deleteGear = async (req: AuthenticatedRequest, res: Response, next:
       return next(new AppError(403, 'Unauthorized to delete this gear item'));
     }
 
-    await prisma.gearItem.delete({ where: { id } });
+    // Use a Prisma transaction to delete dependent rental orders first, then the gear item
+    await prisma.$transaction(async (tx) => {
+      await tx.rentalOrder.deleteMany({
+        where: { gearItemId: id },
+      });
 
-    res.status(200).json({ success: true, message: 'Gear item removed successfully' });
+      await tx.gearItem.delete({
+        where: { id },
+      });
+    });
+
+    res.status(200).json({ success: true, message: 'Gear item and associated orders permanently removed' });
   } catch (error) {
     next(error);
   }
